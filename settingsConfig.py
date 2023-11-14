@@ -13,15 +13,24 @@ class _SettingsConfig:
         __settings["FILE_SYSTEM"] = dict(
             fileSystem=config("DIRECTORIES_FOR_INITIALIZATION", cast=lambda v: [s.strip() for s in v.split(',')])
         )
+        __settings["APP"] = None
         return __settings
 
     @property
-    def DatabaseSettings(self):
+    def databaseSettings(self):
         return self.__settingsConfig["DATABASE"]
 
     @property
-    def FileSystemSettings(self):
+    def fileSystemSettings(self):
         return self.__settingsConfig["FILE_SYSTEM"]
 
+    @property
+    def app(self):
+        return self.__settingsConfig["APP"]
 
-settingsConfig = _SettingsConfig()
+    @app.setter
+    def app(self, settings):
+        self.__settingsConfig["APP"] = settings
+
+
+g_settingsConfig = _SettingsConfig()

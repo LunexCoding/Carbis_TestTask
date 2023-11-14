@@ -8,11 +8,12 @@ class SqlQueries:
         """
 
     # UPDATE A ROW IN A TABLE #
-    def updateTable(tableName, targetElement, targetValue, **kwargs):
+    @staticmethod
+    def updateTable(tableName, element, targetElement, targetValue):
         return f"""
         UPDATE {tableName}
-        SET {", ".join([f"{key}=?" for key, value in kwargs.items()])}
-        WHERE {targetElement}={targetValue}
+        SET {element}=?
+        WHERE {targetElement}='{targetValue}'
         """
 
     # INSERT A ROW INTO THE REQUIRED TABLE #
