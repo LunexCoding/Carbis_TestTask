@@ -1,3 +1,5 @@
+import httpx
+
 from settingsConfig import g_settingsConfig
 from initializer.initializer import g_initializer
 from .commands import commands
@@ -19,26 +21,25 @@ class App:
                 SqlQueries.selectFromTable(DatabaseTables.SETTINGS, targetElement="*"), desc=True
             )
 
-
     def run(self):
         if g_settingsConfig.app["HelpStringVisibility"] == 1:
-            print(Constants.HELLO_MSG)
+            commands["help"]().execute(None)
         while True:
             try:
-                com = input("-> ").split()
+                com = input(Constants.COMMAND_PROMPT_MSG).split()
                 command = com.pop(0)
                 argCommand = " ".join(com)
                 if command == "help" and len(argCommand) == 0:
                     argCommand = None
                 if command in commands:
-                    commands[command].execute(argCommand)
+                    commands[command]().execute(argCommand)
                     if command == "set":
                         self.loadSettings()
                 else:
-                    print("Unknown command")
+                    print(Constants.UNKNOWN_COMMAND_MSG)
+            except httpx.HTTPStatusError as e:
+                print(Constants.HTTP_403_ERROR_MSG)
             except Exception as e:
-                print(e)
-                print("Input Error!")
-                print("Use: help [command]")
+                print(Constants.INPUT_ERROR_MSG)
             except KeyboardInterrupt:
                 break

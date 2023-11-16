@@ -1,6 +1,6 @@
-from dadata import Dadata
-
 import sys
+
+from dadata import Dadata
 
 from .consts import Constants
 from database.database import databaseSession
@@ -71,15 +71,15 @@ class Help(Command):
 
     def execute(self, commandName=None):
         if commandName is None:
-            print(self.getHelpMsg())
+            print(self.msgHelp % "\n".join([f"\t{index}. {command}" for index, command in enumerate(commands, start=1)]))
         if commandName in commands:
-            print(commands[commandName].getHalpMsg())
+            print(commands[commandName]().getHelpMsg())
 
 
 class Quit(Command):
     def __init__(self):
         super().__init__()
-        self.msgHelp = Constants.HELP_QUIT
+        self.msgHelp = Constants.QUIT_HELP_MSG
         self._allowedFlags = None
         self._argsWithoutFlagsOrder = None
 
@@ -131,7 +131,7 @@ class SetSettings(Command):
 class AddressSearch(Command):
     def __init__(self):
         super().__init__()
-        self.msgHelp = Constants.HELP_ADDRESS_SEARCH
+        self.msgHelp = Constants.ADDRESS_SEARCH_HELP_MSG
         self._allowedFlags = {
             "-a": ValueType.STRING
         }
@@ -139,38 +139,61 @@ class AddressSearch(Command):
 
     def execute(self, args):
         dadata = Dadata(g_settingsConfig.api)
-        result = dadata.suggest("address", "москва хабар")
+        result = dadata.suggest("address", args, language=g_settingsConfig.language)
         return result
 
 
 class ChooseAddress(Command):
-    def __init__(self, addressies):
+    def __init__(self):
         super().__init__()
-        self.msgHelp = "help ChooseAddress"
-        self._addressies = addressies
+        self.msgHelp = Constants.CHOOSE_ADDRESS_HELP_MSG
+        self._allowedFlags = {}
+        self._argsWithoutFlagsOrder = []
 
     def execute(self, args):
-        print("call ChooseAddress")
-        print(self._addressies)
+        addresses = {index: address["value"] for index, address in enumerate(args, start=1)}
+        print(Constants.SUGGESTED_ADDRESSES_MSG)
+        for index, address in addresses.items():
+            print(f"\t{index}. {address}")
+        indexRequiredAddress = int(input(Constants.ENTERING_INDEX_REQUIRED_ADDRESS_MSG))
+        return addresses[indexRequiredAddress]
 
 
-class CommandPipeLine:
-    def __init__(self, listComamnds):
-        self._listCommnads = listComamnds
+class FindAddressCoordinates(Command):
+    def __init__(self):
+        super().__init__()
+        self.msgHelp = Constants.FIND_ADDRESS_COORDINATES_HELP_MSG
+        self._allowedFlags = {}
+        self._argsWithoutFlagsOrder = []
 
     def execute(self, args):
-        resultPrevCommand = None
-        for command in self._listCommnads:
-            if resultPrevCommand is None:
-                resultPrevCommand = command().execute(args)
-            else:
-                resultPrevCommand = command(resultPrevCommand).execute(args)
+        dadata = Dadata(g_settingsConfig.api)
+        result = dadata.suggest("address", args, language=g_settingsConfig.language, count=1)
+        return [result[0]["data"]["geo_lat"], result[0]["data"]["geo_lon"]]
+
+
+class SearchPickAddressCoords(Command):
+    def __init__(self):
+        super().__init__()
+        self.msgHelp = Constants.SEARCH_PICK_ADDRESS_COORDS_HELP_MSG
+        self._allowedFlags = {}
+        self._argsWithoutFlagsOrder = []
+
+    def execute(self, args):
+        addresses = AddressSearch().execute(args)
+        if addresses:
+            requiredAddress = ChooseAddress().execute(addresses)
+            coords = FindAddressCoordinates().execute(requiredAddress)
+            print(Constants.SELECTED_ADDRESS_MSG % requiredAddress)
+            print(Constants.ADDRESS_COORDINATES_MSG % (coords[0], coords[1]))
+        else:
+            print(Constants.NOT_FOUND_ADDRESSES)
 
 
 commands = {
-    "settings": CommandPipeLine([ShowSettings]),
-    "set": CommandPipeLine([SetSettings]),
-    "help": CommandPipeLine([Help]),
-    "q": CommandPipeLine([Quit]),
-    "/s": CommandPipeLine([AddressSearch, ChooseAddress])
+    "settings": ShowSettings,
+    "set": SetSettings,
+    "help": Help,
+    "q": Quit,
+    "/s": SearchPickAddressCoords
 }

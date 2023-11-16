@@ -32,6 +32,10 @@ class _SettingsConfig:
     def api(self):
         return self.app["API"]
 
+    @property
+    def language(self):
+        return self.app["Language"]
+
     @app.setter
     def app(self, settings):
         self.__settingsConfig["APP"] = settings
