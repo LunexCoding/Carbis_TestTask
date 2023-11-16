@@ -28,6 +28,10 @@ class _SettingsConfig:
     def app(self):
         return self.__settingsConfig["APP"]
 
+    @property
+    def api(self):
+        return self.app["API"]
+
     @app.setter
     def app(self, settings):
         self.__settingsConfig["APP"] = settings

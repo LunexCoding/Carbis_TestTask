@@ -16,3 +16,4 @@ class Constants:
     HELP_QUIT = """Выход из программы.
 Использование:
     q"""
+    HELP_ADDRESS_SEARCH = """help"""
